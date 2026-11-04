@@ -1,0 +1,13 @@
+# downloads/ builds/ are produced by scripts/*.sh
+downloads/
+out/
+dist/
+prebuilts/
+kernel-src/
+KernelSU/
+susfs4ksu/
+AnyKernel3/
+*.o
+*.pyc
+__pycache__/
+.git-credentials

@@ -1,0 +1,115 @@
+{
+  "model": "Xperia 1 VI",
+  "codename": "pdx245",
+  "platform": "pineapple",
+  "soc": "SM8650",
+  "board": "niobe",
+  "android_version": "android14",
+  "kernel_version": "6.1",
+  "family": "android14-6.1",
+  "lto": "none",
+  "device": {
+    "kernel_source": "LineageOS/android_kernel_sony_sm8650",
+    "kernel_branch": "lineage-24.0",
+    "kernel_commit": "72dc53f720ffe0206100e3e829f148b3e3726680",
+    "auto_track_latest": true,
+    "lineage_device": "pdx245",
+    "defconfig": "gki_defconfig",
+    "config_fragments": [
+      "arch/arm64/configs/vendor/pineapple_GKI.config",
+      "arch/arm64/configs/vendor/sony/pineapple_GKI.config"
+    ],
+    "boot_image_header_version": 4,
+    "page_size": 4096,
+    "kernel_image_name": "Image",
+    "include_dtb_in_bootimg": true
+  },
+  "root": {
+    "flavor": "kernelsu",
+    "repo": "tiann/KernelSU",
+    "branch": "main",
+    "commit": "28db74f6f4692e97006ce9ebd8b19b9cc614b5b7",
+    "susfs_patch": "kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch",
+    "note": "KernelSU-Next tip ships SUSFS as an out-of-tree LKM (needs DDK); in-tree SUSFS is only maintained for tiann/KernelSU via the official 10_enable_susfs_for_ksu.patch. Any manager app (KernelSU Next, SukiSU Ultra) works with this kernel."
+  },
+  "susfs": {
+    "enabled": true,
+    "repo": "https://gitlab.com/simonpunk/susfs4ksu.git",
+    "branch": "gki-android14-6.1",
+    "commit": "a0ac906915c8a8d50d474dfb3cae478ef32edc1a"
+  },
+  "anykernel3": {
+    "repo": "https://github.com/WildKernels/AnyKernel3.git",
+    "branch": "gki-2.0",
+    "commit": "e1e9dce98430c5c6f231f7094a8c7f4ecaf50948"
+  },
+  "toolchain": {
+    "clang_repo": "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86",
+    "clang_ref": "refs/tags/android-17.0.0_r1",
+    "clang_version": "r596125",
+    "build_tools_repo": "https://android.googlesource.com/kernel/prebuilts/build-tools",
+    "build_tools_branch": "main-kernel-2025",
+    "ld": "ld.lld",
+    "llvm_ias": true,
+    "note": "LineageOS 24 nightly pdx245 boot.img banner reports clang 22.0.2 based on r596125; the CLANG_VERSION in build.config.constants is stale."
+  },
+  "bootimg": {
+    "api_url": "https://download.lineageos.org/api/v2/devices/pdx245/builds",
+    "filename": "boot.img",
+    "reference_sha256": "908d3a117ef707e634d9a88ea65eb6028fde92fa0cd1ee7fe023a1535736c69d",
+    "reference_nightly": "lineage-24.0-20261031-nightly-pdx245-signed.zip",
+    "header_version": 4,
+    "page_size": 4096,
+    "note": "os_version/os_patch_level/cmdline are read at build time from the fetched stock boot.img via unpack_bootimg.py --format mkbootimg (verified byte-perfect round-trip: repacking the unmodified kernel reproduces the stock boot image section bit-for-bit)."
+  },
+  "kernel": {
+    "uname": "pdx245-Xm6",
+    "vermagic": "6.1.177-g72dc53f720ff SMP preempt mod_unload modversions aarch64",
+    "localversion": "",
+    "keep_vermagic": true,
+    "modversions": true,
+    "modules_sign": false
+  },
+  "features": {
+    "lto": "none",
+    "bore": false,
+    "tcp_bbr3": false,
+    "big_max": false,
+    "fake_config": true,
+    "config_gz": true
+  },
+  "config": {
+    "CONFIG_KSU": "y",
+    "CONFIG_KSU_SUSFS": "y",
+    "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT": "y",
+    "CONFIG_KSU_SUSFS_SUS_PATH": "y",
+    "CONFIG_KSU_SUSFS_SUS_MOUNT": "y",
+    "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT": "y",
+    "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT": "y",
+    "CONFIG_KSU_SUSFS_SUS_KSTAT": "y",
+    "CONFIG_KSU_SUSFS_SUS_OVERLAYFS": "n",
+    "CONFIG_KSU_SUSFS_TRY_UMOUNT": "y",
+    "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT": "y",
+    "CONFIG_KSU_SUSFS_SPOOF_UNAME": "y",
+    "CONFIG_KSU_SUSFS_ENABLE_LOG": "n",
+    "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS": "y",
+    "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG": "y",
+    "CONFIG_KSU_SUSFS_OPEN_REDIRECT": "y",
+    "CONFIG_KSU_SUSFS_SUS_OVERLAYFS_V4": "n",
+    "CONFIG_KSU_SUSFS_SUS_SU": "n",
+    "CONFIG_KSU_SUSFS_SUS_MAP": "y",
+    "CONFIG_LOCALVERSION": "",
+    "CONFIG_LOCALVERSION_AUTO": "y",
+    "CONFIG_IKHEADERS": "m",
+    "CONFIG_DEBUG_INFO_BTF": "n",
+    "CONFIG_PAHOLE_HAS_SPLIT_BTF": "n",
+    "CONFIG_MODULES": "y",
+    "CONFIG_MODULE_FORCE_LOAD": "n"
+  },
+  "release": {
+    "zip_prefix": "Xm6_KernelSU_SUSFS",
+    "bootimg_prefix": "Xm6_boot_patched",
+    "generate_sha256": true,
+    "flash_instructions": true
+  }
+}
