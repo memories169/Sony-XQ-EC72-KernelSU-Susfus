@@ -61,7 +61,7 @@ fi
 # ---- 3. SUSFS into the kernel tree ------------------------------------------
 SUSFS_PATCH_FILE="$SUSFS_DIR/kernel_patches/50_add_susfs_in_gki-$FAMILY.patch"
 [ -f "$SUSFS_PATCH_FILE" ] || die "missing $SUSFS_PATCH_FILE"
-if ! grep -q susfs_init "$KERNEL_SRC/kernel/sys.c" 2>/dev/null; then
+if ! grep -q 'susfs.o' "$KERNEL_SRC/fs/Makefile" 2>/dev/null; then
   log "Copying susfs sources (fs/susfs.c, include/linux/susfs*.h)"
   cp "$SUSFS_DIR/kernel_patches/fs/"* "$KERNEL_SRC/fs/"
   cp "$SUSFS_DIR/kernel_patches/include/linux/"* "$KERNEL_SRC/include/linux/"
@@ -88,17 +88,27 @@ grep -q 'obj-\$(CONFIG_KSU)' "$KERNEL_SRC/drivers/Makefile" || \
 grep -q 'drivers/kernelsu/Kconfig' "$KERNEL_SRC/drivers/Kconfig" || \
   sed -i '$i source "drivers/kernelsu/Kconfig"' "$KERNEL_SRC/drivers/Kconfig"
 
-# ---- 6. merged defconfig + xm6 fragment --------------------------------------
+# ---- 6. build config = EXACT stock config + KSU/SUSFS on top ----------------
+# LineageOS embeds its full .config into the stock Image (CONFIG_IKCONFIG).
+# We reuse it verbatim so every driver symbol matches the nightly; the only
+# additions are CONFIG_KSU* (root fragment). Anything else stays as Sony/LOS shipped.
+STOCK_IMG="${STOCK_KERNEL:-$OUT_DIR/stock/kernel}"
+[ -f "$STOCK_IMG" ] || die "stock kernel blob missing (run 01_fetch_bootimg.sh)"
+log "Extracting stock .config from boot Image (IKCONFIG)"
+"$KERNEL_SRC/scripts/extract-ikconfig" "$STOCK_IMG" > "$OUT_DIR/xm6.base.config"
+grep -q "^CONFIG_ARCH_PINEAPPLE=y" "$OUT_DIR/xm6.base.config" || \
+  die "extracted config lacks ARCH_PINEAPPLE - not a valid LOS pdx245 image"
+
 FRAG="$OUT_DIR/xm6.fragment"
-python3 - "$DEVICE_CONFIG" "$FRAG" <<'PY'
+python3 - "$DEVICE_CONFIG" "$FRAG" <<'PYEOF'
 import json, sys
 conf, out = sys.argv[1], sys.argv[2]
 c = json.load(open(conf))["config"]
 with open(out, "w") as f:
-    f.write("# Xm6_KernelSU_SUSFS root/config fragment\n")
+    f.write("# Xm6 root fragment (KSU/SUSFS only; base = stock IKCONFIG)\n")
     for k, v in c.items():
         f.write(f"{k}={v}\n" if v != "" else f'{k}=""\n')
-PY
+PYEOF
 
 KERNELRELEASE_SUFFIX="-g${KERNEL_COMMIT:0:12}"
 printf '%s\n' "$KERNELRELEASE_SUFFIX" > "$KERNEL_SRC/.scmversion"

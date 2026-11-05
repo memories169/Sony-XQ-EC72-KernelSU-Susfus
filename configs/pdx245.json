@@ -97,19 +97,24 @@
     "CONFIG_KSU_SUSFS_OPEN_REDIRECT": "y",
     "CONFIG_KSU_SUSFS_SUS_OVERLAYFS_V4": "n",
     "CONFIG_KSU_SUSFS_SUS_SU": "n",
-    "CONFIG_KSU_SUSFS_SUS_MAP": "y",
-    "CONFIG_LOCALVERSION": "",
-    "CONFIG_LOCALVERSION_AUTO": "y",
-    "CONFIG_IKHEADERS": "m",
-    "CONFIG_DEBUG_INFO_BTF": "n",
-    "CONFIG_PAHOLE_HAS_SPLIT_BTF": "n",
-    "CONFIG_MODULES": "y",
-    "CONFIG_MODULE_FORCE_LOAD": "n"
+    "CONFIG_KSU_SUSFS_SUS_MAP": "y"
   },
   "release": {
     "zip_prefix": "Xm6_KernelSU_SUSFS",
     "bootimg_prefix": "Xm6_boot_patched",
     "generate_sha256": true,
     "flash_instructions": true
+  },
+  "config_strategy": {
+    "note": "base config = extracted from stock boot.img Image via scripts/extract-ikconfig (IKCONFIG); only KSU/SUSFS symbols added on top",
+    "removed_overrides": [
+      "CONFIG_LOCALVERSION",
+      "CONFIG_LOCALVERSION_AUTO",
+      "CONFIG_IKHEADERS",
+      "CONFIG_DEBUG_INFO_BTF",
+      "CONFIG_PAHOLE_HAS_SPLIT_BTF",
+      "CONFIG_MODULES",
+      "CONFIG_MODULE_FORCE_LOAD"
+    ]
   }
 }

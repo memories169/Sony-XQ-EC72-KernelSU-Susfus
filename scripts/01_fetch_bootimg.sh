@@ -73,4 +73,11 @@ env_put EXPECTED_RELEASE "$EXPECTED_RELEASE"
 env_put STOCK_KERNEL_COMMIT "$MANIFEST_REV"
 env_put KERNEL_SRC_REPO "$SRC_PROJECT"
 env_put CLANG_BANNER "$CLANG_BANNER"
+
+# unpack stock boot.img now: its embedded Image carries the EXACT LineageOS
+# .config (IKCONFIG) which later stages reuse as build base
+python3 "$REPO_DIR/tools/mkbootimg/unpack_bootimg.py" --boot_img "$DOWNLOADS/boot.img" \
+  --out "$OUT_DIR/stock" --format mkbootimg > "$OUT_DIR/stock_mkbootimg_args.txt"
+env_put STOCK_KERNEL "$OUT_DIR/stock/kernel"
+log "stock kernel blob unpacked for config extraction"
 log "boot.img ready ($NIGHTLY_VERSION, release $EXPECTED_RELEASE)"
