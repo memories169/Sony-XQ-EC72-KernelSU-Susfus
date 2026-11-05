@@ -65,9 +65,13 @@ fastboot reboot
 - **`flash_boot failed` / partition không resize được** → dùng fastboot thay recovery:
   `fastboot flash boot_<slot> boot_Xm6.img`
 - zip **có chứa sẵn `boot.img`** đã repack (khác các bản AK3 GKI thường chỉ có `Image`):
-  đây là chủ ý — boot.img gốc có ramdisk rỗng nên AK3 không "vá" ramdisk được, cách chắc
-  nhất là flash nguyên ảnh boot dựng lại từ header stock. Nếu muốn, bạn vẫn có thể
-  `fastboot boot`/flash riêng file `boot.img` extract từ zip.
+  đây là chủ ý. Bố trí partition của pdx245 theo chuẩn GKI hdr v4:
+  `boot.img` = nhân thuần (**ramdisk rỗng**), `init_boot.img` = ramdisk GKI (first-stage init),
+  `dtbo.img` = DTB. KernelSU + SUSFS nằm **trong nhân** nên không cần vá ramdisk ở `init_boot`;
+  `init_boot`/`dtbo`/`vendor_boot` giữ nguyên của ROM, zip chỉ thay `boot`.
+  Cách của AK3 mẫu (magiskboot vá Image vào boot đang chạy) không dùng được ở đây vì
+  chẳng có ramdisk trong boot để vá — vì vậy zip flash nguyên ảnh boot dựng lại từ header stock.
+  Nếu muốn, bạn vẫn có thể `fastboot` riêng file `boot.img` extract từ zip.
 
 ### Sau khi boot
 1. Cài app **KernelSU** (hoặc KernelSU-Next/SukiSU) → phải báo *Đã cài đặt / Đang chạy*.
