@@ -17,7 +17,29 @@ ARGS=$(python3 "$MKB/unpack_bootimg.py" --boot_img "$STOCK" --out "$OUT_DIR/unpa
 log "stock mkbootimg args: $ARGS"
 
 # Force our own Image; keep everything else (os version/patch level/cmdline) from stock.
-ARGS_CLEAN=$(echo "$ARGS" | sed -E 's#--kernel [^ ]+#--kernel '"$DIST_DIR"'/Image#')
+# Drop the --cmdline pair: its value token '' survives shell word-splitting as
+# literal two-quote chars (0x27 0x27) landing in boot cmdline bytes 44-45 ->
+# the kernel receives garbage parameters. mkbootimg default cmdline is "" anyway.
+ARGS_CLEAN=$(ARGS="$ARGS" DIST_IMG="$DIST_DIR/Image" python3 - <<'PYX'
+import os
+toks = os.environ['ARGS'].split()
+out = []
+i = 0
+while i < len(toks):
+    t = toks[i]
+    if t == '--cmdline':
+        i += 2                     # drop pair: default cmdline is ""
+        continue
+    if t == '--kernel':
+        out += ['--kernel', os.environ['DIST_IMG']]
+        i += 2                     # drop stock kernel path too
+        continue
+    out.append(t)
+    i += 1
+print(' '.join(out))
+PYX
+)
+log "mkbootimg args: $ARGS_CLEAN"
 # shellcheck disable=SC2086
 python3 "$MKB/mkbootimg.py" $ARGS_CLEAN \
   --output "$DIST_DIR/boot_Xm6.img"

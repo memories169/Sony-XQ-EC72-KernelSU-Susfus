@@ -78,6 +78,25 @@ fastboot reboot
 2. (Tuỳ chọn) cài **Zygisk Next** + module **SusFS Checker** để xác nhận SUSFS: `dmesg | grep -i susfs`.
 3. Kiểm tra root: mở app → cấp root cho terminal.
 
+## Nhật ký sự cố bootloop
+
+- **nightly-2 (04/11)** — bootloop. Nguyên nhân: build dùng `gki_defconfig` trần (thiếu
+  `ARCH_PINEAPPLE`, `ARM_SMMU`…). Đã sửa: build giờ lấy `.config` **trích từ chính kernel stock**
+  (`extract-ikconfig` từ boot.img nightly) rồi chỉ thêm các key `CONFIG_KSU*`, kèm cổng kiểm
+  tự động chặn build nếu config lệch stock ngoài danh sách cho phép.
+- **nightly-3 (05/11 sáng)** — vẫn bootloop. Điều tra bằng thí nghiệm điều khiển: build kernel
+  **nguyên bản 100%** (không KSU/SUSFS) bằng đúng pipeline của repo → ảnh `Image` cùng kích thước
+  và cùng layout với stock (lệch ~85 KB phân tán do cert ký module tự sinh + biểu tượng build-id;
+  `MODULE_SIG_FORCE=n` nên cert khác vô hại — đã đọc kỹ `kernel/module/main.c` để xác nhận). Phát hiện bug repack: tham số `--cmdline ''`
+  bị shell truyền nguyên văn 2 ký tự nháy (`0x27 0x27`) vào vùng reserved của boot header.
+  Đã thay bằng bộ lọc argparse bằng Python; **nghiệm thu: repack lại bằng kernel stock tái tạo
+  35.65 MB đầu của boot gốc chính xác từng byte** (chỉ không sao chép phần padding 64 MB cuối,
+  vốn chỉ là số 0 — avbtool xác nhận hash AVB gốc chỉ phủ đúng 35651584 byte đầu).
+- **nightly-4 (05/11 chiều)** = kernel nightly-3 + boot.img repack đã sửa header. Kèm bản
+  **`Xm6_CONTROL-diagnostic-*.zip`** (kernel nguyên bản, không root) trong release để phân tách
+  nguyên nhân nếu vẫn bootloop: control boot được ⇒ lỗi do code KSU/SUSFS; control cũng loop
+  ⇒ lỗi môi trường flash (recovery/vbmeta), khi đó flash `boot_Xm6.img` bằng fastboot.
+
 ## Rủi ro & lưu ý
 
 - **Bootloader phải unlock** — bảo hành mất, widevine L1 mất (đây là sự thật với mọi kernel tùy chỉnh).
