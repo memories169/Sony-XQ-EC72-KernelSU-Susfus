@@ -67,10 +67,13 @@ def load(p):
 a, b = load(sys.argv[1]), load(sys.argv[2])
 diffs = [(k, a.get(k), b.get(k)) for k in sorted(set(a) | set(b))
          if a.get(k, '<abs>') != b.get(k, '<abs>')]
+HOST_DEP = ('CONFIG_RUST_IS_AVAILABLE', 'CONFIG_CC_HAS_', 'CONFIG_HAVE_',
+            'CONFIG_GCC_VERSION', 'CONFIG_CC_VERSION_TEXT', 'CONFIG_CLANG_VERSION',
+            'CONFIG_LD_VERSION', 'CONFIG_LD_IS_', 'CONFIG_AS_', 'CONFIG_PAHOLE',
+            'CONFIG_DEBUG_INFO_BTF', 'CONFIG_LOCALVERSION', 'CONFIG_LD_HAS_',
+            'CONFIG_RUSTC_VERSION', 'CONFIG_RUSTC_HAS_', 'CONFIG_AS_HAS_')
 bad = [d for d in diffs if not (d[0].startswith('CONFIG_KSU')
-       or d[0] in ('CONFIG_DEBUG_INFO_BTF', 'CONFIG_DEBUG_INFO_BTF_MODULES',
-                   'CONFIG_LOCALVERSION', 'CONFIG_CC_VERSION_TEXT')
-       or d[0].startswith('CONFIG_PAHOLE'))]
+       or d[0].startswith(HOST_DEP))]
 for d in bad[:20]: print('UNEXPECTED:', d)
 print(len(bad))
 PY
