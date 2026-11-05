@@ -57,6 +57,18 @@ fastboot flash boot_a boot_Xm6.img   # hoặc boot_b
 fastboot reboot
 ```
 
+### Vấn đề thường gặp
+
+- **`Unsupported device. Aborting...`** — bản zip trước 05/11/2026 chỉ nhận `pdx245`/`XQ-EC72`,
+  trong khi LineageOS pdx245 khai báo `ro.product.device` là SKU EEA (vd. `XQ-EC54`).
+  Tải lại zip mới nhất (đã nhận mọi SKU XQ-EC44/54/64/72) hoặc dùng fastboot.
+- **`flash_boot failed` / partition không resize được** → dùng fastboot thay recovery:
+  `fastboot flash boot_<slot> boot_Xm6.img`
+- zip **có chứa sẵn `boot.img`** đã repack (khác các bản AK3 GKI thường chỉ có `Image`):
+  đây là chủ ý — boot.img gốc có ramdisk rỗng nên AK3 không "vá" ramdisk được, cách chắc
+  nhất là flash nguyên ảnh boot dựng lại từ header stock. Nếu muốn, bạn vẫn có thể
+  `fastboot boot`/flash riêng file `boot.img` extract từ zip.
+
 ### Sau khi boot
 1. Cài app **KernelSU** (hoặc KernelSU-Next/SukiSU) → phải báo *Đã cài đặt / Đang chạy*.
 2. (Tuỳ chọn) cài **Zygisk Next** + module **SusFS Checker** để xác nhận SUSFS: `dmesg | grep -i susfs`.
