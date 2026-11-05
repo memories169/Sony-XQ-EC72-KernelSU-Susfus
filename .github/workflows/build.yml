@@ -88,7 +88,7 @@ jobs:
         if: github.event_name == 'schedule' || inputs.draft_release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: nightly-${{ github.run_number }}
+          tag_name: ci-${{{{ github.run_number }}}}
           draft: ${{ github.event_name != 'schedule' }}
           prerelease: false
           generate_release_notes: false
