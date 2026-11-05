@@ -30,7 +30,10 @@ do.cleanup=1
 do.cleanuponabort=0
 do.check_boot_version=0
 device.name1=pdx245
-device.name2=XQ-EC72
+device.name2=XQ-EC54
+device.name3=XQ-EC72
+device.name4=XQ-EC44
+device.name5=XQ-EC64
 supported.versions=
 supported.patchlevels=
 '; } # end properties
