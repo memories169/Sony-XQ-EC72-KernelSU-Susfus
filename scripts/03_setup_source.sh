@@ -118,8 +118,6 @@ cp -a "$KSU_DIR/kernel/." "$KERNEL_SRC/drivers/kernelsu/"
 # flat in-tree build resolves every include.
 mkdir -p "$KERNEL_SRC/drivers/kernelsu/uapi"
 cp -a "$KSU_DIR/uapi/." "$KERNEL_SRC/drivers/kernelsu/uapi/"
-mkdir -p "$KERNEL_SRC/drivers/kernelsu/include/uapi"
-cp -a "$KSU_DIR/uapi/." "$KERNEL_SRC/drivers/kernelsu/include/uapi/"
 
 # Makefile wiring: append at end (idempotent)
 if ! grep -q "obj-\$(CONFIG_KSU)" "$KERNEL_SRC/drivers/Makefile"; then
