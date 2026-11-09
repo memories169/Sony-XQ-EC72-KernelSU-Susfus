@@ -22,10 +22,10 @@
   "kernelsu": {
     "repo": "https://github.com/tiann/KernelSU.git",
     "branch": "main",
-    "commit": "28db74f6f4692e97006ce9ebd8b19b9cc614b5b7",
+    "commit": "019a3c0103a8f8d56675546016c4073d0fd18352",
     "susfs_ksu_patch": "kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch",
-    "manager_min": 11891,
-    "note": "Pin = the exact upstream commit SUSFS 2.4.0's 10_enable_susfs_for_ksu.patch applies to (verified with git apply --check; the later 019a3c0 'Mark original type datum' moves latest_granting and breaks the patch preimage)."
+    "manager_min": 32620,
+    "note": "SUSFS 2.4.0 (a2165b6) 10_enable_susfs_for_ksu.patch verified to apply cleanly to this commit (git apply --check); requires manager >= 32620 (UAPI change)."
   },
   "susfs": {
     "repo": "https://gitlab.com/simonpunk/susfs4ksu.git",
