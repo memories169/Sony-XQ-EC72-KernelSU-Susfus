@@ -82,6 +82,31 @@ git -C "$KERNEL_SRC" apply "$SUS_PATCH"
 
 # copy susfs source files (patch adds build wiring; files live in kernel_patches/)
 cp -v "$SUSFS_DIR/kernel_patches/fs/susfs.c"            "$KERNEL_SRC/fs/"
+# upstream 2.4.0 bug: the no-log stub block misses the _RL variants while susfs.c calls them
+# unconditionally -> undeclared-function errors when CONFIG_KSU_SUSFS_ENABLE_LOG=n. Patch the
+# copied file (not the pristine patch source).
+python3 - "$KERNEL_SRC/fs/susfs.c" <<'PY'
+import sys
+p = sys.argv[1]
+t = open(p).read()
+old = """#else
+#define SUSFS_LOGI(fmt, ...)
+#define SUSFS_LOGE(fmt, ...)
+#endif"""
+new = """#else
+#define SUSFS_LOGI(fmt, ...)
+#define SUSFS_LOGE(fmt, ...)
+#define SUSFS_LOGI_RL(fmt, ...)
+#define SUSFS_LOGE_RL(fmt, ...)
+#endif"""
+if old in t:
+    open(p, 'w').write(t.replace(old, new, 1))
+    print("susfs.c: added missing _RL no-log stubs")
+elif new in t:
+    print("susfs.c: _RL stubs already present")
+else:
+    print("susfs.c: pattern not found — upstream may have fixed it; leaving as-is")
+PY
 cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs.h"     "$KERNEL_SRC/include/linux/"
 cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs_def.h" "$KERNEL_SRC/include/linux/"
 
@@ -89,6 +114,9 @@ cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs_def.h" "$KERNEL_SRC/include
 log "wiring drivers/kernelsu into kernel tree..."
 mkdir -p "$KERNEL_SRC/drivers/kernelsu"
 cp -a "$KSU_DIR/kernel/." "$KERNEL_SRC/drivers/kernelsu/"
+# KSU sources include "uapi/app_profile.h"; upstream keeps uapi/ one level above kernel/
+# (resolvable in their M= build, not in a flat copy) — mirror it into drivers/kernelsu/
+cp -a "$KSU_DIR/uapi" "$KERNEL_SRC/drivers/kernelsu/uapi"
 
 # Makefile wiring: append at end (idempotent)
 if ! grep -q "obj-\$(CONFIG_KSU)" "$KERNEL_SRC/drivers/Makefile"; then
