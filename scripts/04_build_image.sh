@@ -73,7 +73,7 @@ make -C "$KERNEL_SRC" O=out ARCH=arm64 olddefconfig
 # BTF off: pahole not available on CI; not needed for boot (stock has BTF off too? verify)
 if grep -q "^CONFIG_DEBUG_INFO_BTF=y" "$KERNEL_SRC/out/.config"; then
   log "disabling DEBUG_INFO_BTF (pahole unavailable, matches CONTROL build)"
-  ./scripts/config --file "$KERNEL_SRC/out/.config" -d DEBUG_INFO_BTF
+  "$KERNEL_SRC/scripts/config" --file "$KERNEL_SRC/out/.config" -d DEBUG_INFO_BTF
   echo "# CONFIG_DEBUG_INFO_BTF is not set" >> "$KERNEL_SRC/out/.config"
   make -C "$KERNEL_SRC" O=out ARCH=arm64 olddefconfig
 fi
