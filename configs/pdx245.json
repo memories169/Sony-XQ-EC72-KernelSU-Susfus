@@ -22,15 +22,15 @@
   "kernelsu": {
     "repo": "https://github.com/tiann/KernelSU.git",
     "branch": "main",
-    "commit": "019a3c0103a8f8d56675546016c4073d0fd18352",
+    "commit": "28db74f6f4692e97006ce9ebd8b19b9cc614b5b7",
     "susfs_ksu_patch": "kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch",
-    "manager_min": 32620,
-    "note": "Pin held for SUSFS 2.4.0 compatibility (see kernel_patches README)."
+    "manager_min": 11891,
+    "note": "Pin = the exact upstream commit SUSFS 2.4.0's 10_enable_susfs_for_ksu.patch applies to (verified with git apply --check; the later 019a3c0 'Mark original type datum' moves latest_granting and breaks the patch preimage)."
   },
   "susfs": {
     "repo": "https://gitlab.com/simonpunk/susfs4ksu.git",
     "branch": "gki-android14-6.1",
-    "commit": "auto",
+    "commit": "a2165b6f875b73e2f87d3c6f12814efac8de061d",
     "version": "2.4.0",
     "kernel_patch": "kernel_patches/50_add_susfs_in_gki-android14-6.1.patch",
     "files_to_copy": [
