@@ -117,6 +117,7 @@ LUU Y QUAN TRONG:
 - KHONG flash recovery.img / vendor_boot / dtbo khi doi kernel.
 - Sau khi ve boot stock nguon: mo lai fastbootd de flash kernel mong muon.
 
+EOF
 (cd "$OUT_DIR/restore" && zip -r9 -q "$RESTORE" boot-stock.img RESTORE-README.txt)
 ( cd "$DIST_DIR" && sha256sum "$(basename "$RESTORE")" > "$(basename "$RESTORE").sha256" )
 
