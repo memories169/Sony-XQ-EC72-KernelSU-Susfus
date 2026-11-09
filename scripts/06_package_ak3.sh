@@ -104,10 +104,11 @@ EOF
 ( cd "$DIST_DIR" && sha256sum "$(basename "$RESTORE")" > "$(basename "$RESTORE").sha256" )
 
 # ---------- release notes ----------
-if [ "$XM6_KSU_COMMIT" = "none" ] || [ -z "${XM6_KSU_COMMIT:-}" ]; then
+KSU_REF="${XM6_KSU_COMMIT:-none}"
+if [ "$KSU_REF" = "none" ] || [ -z "$KSU_REF" ]; then
   BUILD_DESC="CONTROL (no KernelSU/SUSFS) — diagnostic build"
 else
-  BUILD_DESC="KernelSU ${XM6_KSU_COMMIT:0:12} + SUSFS ${XM6_SUSFS_VERSION:-?}"
+  BUILD_DESC="KernelSU ${KSU_REF:0:12} + SUSFS ${XM6_SUSFS_VERSION:-?}"
 fi
 cat > "$DIST_DIR/RELEASE_NOTES.md" <<EOF
 # Xm6 KernelSU-SUSFS for Xperia 1 VI (pdx245) — build $STAMP
