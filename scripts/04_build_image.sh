@@ -61,13 +61,18 @@ echo "# CONFIG_LOCALVERSION_AUTO is not set" >> "$FRAG"
 fi
 
 # merge: defconfig -> base -> fragment
-log "merging: gki_defconfig + stock base + KSU/SUSFS fragment"
-make -C "$KERNEL_SRC" O=out ARCH=arm64 gki_defconfig
+# CRITICAL: every kconfig invocation must run with the FINAL compiler (LLVM=1) because several
+# symbols (CFI_CLANG, CC_HAVE_SHADOW_CALL_STACK, ...) depend on $(cc-option,...) evaluated
+# against the toolchain. Without it, olddefconfig silently drops CFI/SCS (defaults N) and the
+# resulting kernel diverges from stock (frame-size blowups, CFI mismatch).
+KCFG_FLAGS="ARCH=arm64 LLVM=1 LLVM_IAS=1"
+log "merging: gki_defconfig + stock base + KSU/SUSFS fragment (with LLVM=1 toolchain)"
+make -C "$KERNEL_SRC" O=out $KCFG_FLAGS gki_defconfig
 cp "$OUT_DIR/xm6.base.config" "$KERNEL_SRC/out/.config"
 # apply fragment on top (before any olddefconfig so every value lands in one pass)
 cat "$FRAG" >> "$KERNEL_SRC/out/.config"
 # single olddefconfig settles everything; then verify mandatory symbols survived
-make -C "$KERNEL_SRC" O=out ARCH=arm64 olddefconfig
+make -C "$KERNEL_SRC" O=out $KCFG_FLAGS olddefconfig
 
 MANDATORY=(CONFIG_ARCH_PINEAPPLE CONFIG_CFI_CLANG CONFIG_SHADOW_CALL_STACK
            CONFIG_MODULE_SIG CONFIG_MODULE_SIG_PROTECT CONFIG_MODVERSIONS
@@ -81,14 +86,14 @@ for sym in "${MANDATORY[@]}"; do
 done
 [ -z "$missing" ] || log "re-injected missing mandatory symbols:$missing"
 # settle again after re-injection
-make -C "$KERNEL_SRC" O=out ARCH=arm64 olddefconfig
+make -C "$KERNEL_SRC" O=out $KCFG_FLAGS olddefconfig
 
 # BTF off: pahole not available on CI; not needed for boot (stock has BTF off too? verify)
 if grep -q "^CONFIG_DEBUG_INFO_BTF=y" "$KERNEL_SRC/out/.config"; then
   log "disabling DEBUG_INFO_BTF (pahole unavailable, matches CONTROL build)"
   "$KERNEL_SRC/scripts/config" --file "$KERNEL_SRC/out/.config" -d DEBUG_INFO_BTF
   echo "# CONFIG_DEBUG_INFO_BTF is not set" >> "$KERNEL_SRC/out/.config"
-  make -C "$KERNEL_SRC" O=out ARCH=arm64 olddefconfig
+  make -C "$KERNEL_SRC" O=out $KCFG_FLAGS olddefconfig
 fi
 
 # verify critical gates
