@@ -41,7 +41,7 @@ if [ "$CONTROL" = "1" ]; then
   log "CONTROL build — fragment = LOCALVERSION pin only"
   cat > "$FRAG" <<'EOF'
 CONFIG_LOCALVERSION=""
-# CONFIG_LOCALVERSION_AUTO is not set
+CONFIG_LOCALVERSION_AUTO=y
 EOF
 else
 while IFS='=' read -r k v; do
@@ -57,7 +57,7 @@ for k, v in d['config']['values'].items():
 # vermagic pin: force LOCALVERSION empty and a fixed scmversion suffix
 echo "" >> "$FRAG"
 echo "CONFIG_LOCALVERSION=\"\"" >> "$FRAG"
-echo "# CONFIG_LOCALVERSION_AUTO is not set" >> "$FRAG"
+echo "CONFIG_LOCALVERSION_AUTO=y" >> "$FRAG"
 fi
 
 # merge: defconfig -> base -> fragment
