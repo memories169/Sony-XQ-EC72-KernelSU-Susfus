@@ -3,6 +3,11 @@
 Custom kernel cho **Sony Xperia 1 VI (pdx245)** trên **LineageOS 24.0** (Android 17),
 tích hợp **KernelSU (tiann, upstream)** + **SUSFS 2.4.0**.
 
+> ✅ **Trạng thái CI:** CONTROL (kernel tái build không KSU) và bản
+> KernelSU+SUSFS đều đã build **xanh** trên GitHub Actions — boot.signed.img
+> được AVB ký bằng testkey khớp khóa của LOS (sha1 `2597c218…`), vermagic
+> `6.1.177-g72dc53f720ff` khớp stock 100%, chữ ký vbmeta xác minh OK.
+
 > ⚠️ **LUÔN tải kèm zip `Xm6_RESTORE_stock_boot-*` trong mỗi release.**
 > Nó chứa boot.img stock + hướng dẫn khôi phục — cứu máy trong ~2 phút
 > qua fastboot, **không cần newflasher, không mất dữ liệu**.
