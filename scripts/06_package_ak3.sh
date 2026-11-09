@@ -63,7 +63,7 @@ cp "$OUT_DIR/boot.signed.img" "$AK3_DIR/standalone_boot.img"
 mkdir -p "$DIST_DIR"
 ZIP="$DIST_DIR/${PREFIX}-pdx245-${STAMP}.zip"
 rm -f "$ZIP"
-(cd "$AK3_DIR" && zip -r9 -q "$OLDPWD/$ZIP" \
+(cd "$AK3_DIR" && zip -r9 -q "$ZIP" \
   anykernel.sh Image standalone_boot.img \
   -x '*.git*')
 
@@ -100,7 +100,7 @@ Lưu ý:
 - Phân vùng khởi động đôi (A/B): nếu fastboot báo "no boot partition",
   thử: fastboot flash boot_a boot-stock.img ; fastboot flash boot_b boot-stock.img
 EOF
-(cd "$OUT_DIR/restore" && zip -r9 -q "$OLDPWD/$RESTORE" boot-stock.img RESTORE-README.txt)
+(cd "$OUT_DIR/restore" && zip -r9 -q "$RESTORE" boot-stock.img RESTORE-README.txt)
 ( cd "$DIST_DIR" && sha256sum "$(basename "$RESTORE")" > "$(basename "$RESTORE").sha256" )
 
 # ---------- release notes ----------
