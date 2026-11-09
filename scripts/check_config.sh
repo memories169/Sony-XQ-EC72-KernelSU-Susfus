@@ -24,10 +24,10 @@ for k in "${need_y[@]}"; do
 done
 
 need_n=(
-  CONFIG_KSU_SUSFS_SUS_SU
+  CONFIG_KSU_SUSFS_ENABLE_LOG
 )
 for k in "${need_n[@]}"; do
-  [ "$(get "$k")" = "n" ] || { echo "FAIL: $k must be n (SUS_SU bootloops non-GKI)"; fail=1; }
+  [ "$(get "$k")" = "n" ] || { echo "FAIL: $k must be n (noisy susfs logs)"; fail=1; }
 done
 
 # LTO must be none (CFI with LTO clang LTO changes type hashes vs stock)

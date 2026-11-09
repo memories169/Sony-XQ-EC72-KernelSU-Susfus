@@ -82,25 +82,28 @@
   "config": {
     "base": "extract-ikconfig from stock boot.img kernel (IKCONFIG_ST)",
     "delta_only": true,
-    "allowed_delta_prefixes": ["CONFIG_KSU", "CONFIG_SUSFS", "CONFIG_LOCALVERSION", "CONFIG_LOCALVERSION_AUTO", "CONFIG_DEBUG_INFO_BTF", "CONFIG_PAHOLE"],
+    "allowed_delta_prefixes": [
+      "CONFIG_KSU",
+      "CONFIG_SUSFS",
+      "CONFIG_LOCALVERSION",
+      "CONFIG_LOCALVERSION_AUTO",
+      "CONFIG_DEBUG_INFO_BTF",
+      "CONFIG_PAHOLE"
+    ],
     "values": {
       "CONFIG_KSU": "y",
       "CONFIG_KSU_SUSFS": "y",
-      "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT": "y",
       "CONFIG_KSU_SUSFS_SUS_PATH": "y",
       "CONFIG_KSU_SUSFS_SUS_MOUNT": "y",
-      "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT": "y",
-      "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT": "y",
       "CONFIG_KSU_SUSFS_SUS_KSTAT": "y",
-      "CONFIG_KSU_SUSFS_SUS_OVERLAYFS": "n",
-      "CONFIG_KSU_SUSFS_TRY_UMOUNT": "y",
-      "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT": "y",
       "CONFIG_KSU_SUSFS_SPOOF_UNAME": "y",
       "CONFIG_KSU_SUSFS_ENABLE_LOG": "n",
-      "CONFIG_KSU_SUSFS_HIDE_KSU_SYMBOLS": "y",
+      "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS": "y",
       "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG": "y",
       "CONFIG_KSU_SUSFS_OPEN_REDIRECT": "y",
-      "CONFIG_KSU_SUSFS_SUS_SU": "n"
-    }
+      "CONFIG_KSU_SUSFS_SUS_MAP": "y",
+      "CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER": "y"
+    },
+    "note": "Symbol set matches SUSFS 2.4.0 Kconfig exactly (v2.x removed AUTO_ADD_*, TRY_UMOUNT, SUS_OVERLAYFS, HAS_MAGIC_MOUNT, SUS_SU \u2014 those behaviors are now integral or handled by manager)."
   }
 }
