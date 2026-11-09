@@ -3,10 +3,14 @@ name: Build Xm6 KernelSU-SUSFS (pdx245)
 on:
   workflow_dispatch:
     inputs:
-      build_control:
-        description: "Build CONTROL (no KSU/SUSFS) instead — diagnostic"
-        type: boolean
-        default: false
+      build_variant:
+        description: "Variant: ksu-susfs (full), ksu-only (no SUSFS), control (diagnostic)"
+        type: choice
+        default: ksu-susfs
+        options:
+          - ksu-susfs
+          - ksu-only
+          - control
       kernel_commit:
         description: "Kernel commit override (empty = config pin)"
         required: false
@@ -69,20 +73,20 @@ jobs:
 
       - name: 03 — kernel + KSU + SUSFS source
         run: |
-          if [ "${{ inputs.build_control }}" = "true" ]; then
-            # CONTROL build: skip KSU/SUSFS entirely
-            bash scripts/03_setup_source.sh --control
-          else
-            bash scripts/03_setup_source.sh
-          fi
+          case "${{ inputs.build_variant }}" in
+            control)  bash scripts/03_setup_source.sh --control ;;
+            ksu-only) bash scripts/03_setup_source.sh --ksu-only ;;
+            *)        bash scripts/03_setup_source.sh ;;
+          esac
+          echo "XM6_VARIANT=${{ inputs.build_variant }}" >> "$GITHUB_ENV"
 
       - name: 04 — build Image
         run: |
-          if [ "${{ inputs.build_control }}" = "true" ]; then
-            bash scripts/04_build_image.sh --control
-          else
-            bash scripts/04_build_image.sh
-          fi
+          case "${{ inputs.build_variant }}" in
+            control)  bash scripts/04_build_image.sh --control ;;
+            ksu-only) bash scripts/04_build_image.sh --ksu-only ;;
+            *)        bash scripts/04_build_image.sh ;;
+          esac
 
       - name: 05 — repack + re-sign boot.img
         run: bash scripts/05_repack_bootimg.sh
@@ -93,7 +97,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xm6-${{ inputs.build_control == true && 'control' || 'ksu-susfs' }}-${{ github.run_id }}
+          name: xm6-${{ inputs.build_variant }}-${{ github.run_id }}
           path: |
             dist/*
             out/boot.signed.img
@@ -105,7 +109,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: nightly-${{ github.run_id }}
-          name: Xm6 build ${{ github.run_id }} (${{ inputs.build_control == true && 'CONTROL' || 'KSU+SUSFS' }})
+          name: Xm6 build ${{ github.run_id }} (${{ inputs.build_variant }})
           draft: true
           files: |
             dist/*

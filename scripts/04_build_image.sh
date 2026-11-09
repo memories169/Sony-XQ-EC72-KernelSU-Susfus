@@ -5,6 +5,8 @@ source "$(dirname "$0")/common.sh"
 
 CONTROL=0
 [ "${1:-}" = "--control" ] && CONTROL=1
+KSU_ONLY=0
+[ "${1:-}" = "--ksu-only" ] && KSU_ONLY=1
 
 require_tools python3
 
@@ -40,6 +42,13 @@ FRAG="$OUT_DIR/xm6.fragment.config"
 if [ "$CONTROL" = "1" ]; then
   log "CONTROL build — fragment = LOCALVERSION pin only"
   cat > "$FRAG" <<'EOF'
+CONFIG_LOCALVERSION=""
+CONFIG_LOCALVERSION_AUTO=y
+EOF
+elif [ "$KSU_ONLY" = "1" ]; then
+  log "KSU-ONLY build — fragment = KSU symbols (no SUSFS) + LOCALVERSION pin"
+  cat > "$FRAG" <<'EOF'
+CONFIG_KSU=y
 CONFIG_LOCALVERSION=""
 CONFIG_LOCALVERSION_AUTO=y
 EOF
@@ -103,6 +112,12 @@ if [ "$CONTROL" = "1" ]; then
     die "CONTROL build must not have CONFIG_KSU=y"
   fi
   log "control gates OK (no KSU)"
+elif [ "$KSU_ONLY" = "1" ]; then
+  grep -q "^CONFIG_KSU=y" "$KERNEL_SRC/out/.config" || die "KSU-ONLY build must have CONFIG_KSU=y"
+  if grep -q "^CONFIG_KSU_SUSFS=y" "$KERNEL_SRC/out/.config"; then
+    die "KSU-ONLY build must NOT have CONFIG_KSU_SUSFS=y"
+  fi
+  log "ksu-only gates OK (KSU present, no SUSFS)"
 else
   # subshell: check_config.sh ends with `exit $fail`, which would terminate THIS script
   # (sourced scripts' exit leaves the caller) — run it in ( ) and map to die on failure

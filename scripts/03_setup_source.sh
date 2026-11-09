@@ -5,6 +5,8 @@ source "$(dirname "$0")/common.sh"
 
 CONTROL=0
 [ "${1:-}" = "--control" ] && CONTROL=1
+KSU_ONLY=0
+[ "${1:-}" = "--ksu-only" ] && KSU_ONLY=1
 
 require_tools git python3 patch
 
@@ -71,14 +73,22 @@ KSURES=$(git -C "$KSU_DIR" rev-parse HEAD)
 log "KernelSU @ ${KSURES:0:12}"
 
 # 1) apply 10_enable_susfs_for_ksu.patch INSIDE the KernelSU tree first
-log "applying 10_enable_susfs_for_ksu.patch to KernelSU..."
-git -C "$KSU_DIR" apply --check "$KSU_PATCH" || die "KSU susfs patch does not apply cleanly"
-git -C "$KSU_DIR" apply "$KSU_PATCH"
+#    (KSU-only builds use pristine KSU: the susfs patch requires susfs kernel-side)
+if [ "$KSU_ONLY" = "1" ]; then
+  log "KSU-ONLY variant: skipping susfs patch on KernelSU"
+else
+  log "applying 10_enable_susfs_for_ksu.patch to KernelSU..."
+  git -C "$KSU_DIR" apply --check "$KSU_PATCH" || die "KSU susfs patch does not apply cleanly"
+  git -C "$KSU_DIR" apply "$KSU_PATCH"
+fi
 
-# ---------- kernel patches ----------
-log "applying 50_add_susfs_in_gki-android14-6.1.patch to kernel..."
-git -C "$KERNEL_SRC" apply --check "$SUS_PATCH" || die "kernel susfs patch does not apply cleanly"
-git -C "$KERNEL_SRC" apply "$SUS_PATCH"
+if [ "$KSU_ONLY" = "1" ]; then
+  log "KSU-ONLY variant: skipping kernel susfs patch + files"
+else
+  # ---------- kernel patches ----------
+  log "applying 50_add_susfs_in_gki-android14-6.1.patch to kernel..."
+  git -C "$KERNEL_SRC" apply --check "$SUS_PATCH" || die "kernel susfs patch does not apply cleanly"
+  git -C "$KERNEL_SRC" apply "$SUS_PATCH"
 
 # copy susfs source files (patch adds build wiring; files live in kernel_patches/)
 cp -v "$SUSFS_DIR/kernel_patches/fs/susfs.c"            "$KERNEL_SRC/fs/"
@@ -107,6 +117,7 @@ else:
 PY
 cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs.h"     "$KERNEL_SRC/include/linux/"
 cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs_def.h" "$KERNEL_SRC/include/linux/"
+fi
 
 # ---------- wire KernelSU into the kernel tree ----------
 log "wiring drivers/kernelsu into kernel tree..."

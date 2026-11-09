@@ -123,7 +123,9 @@ EOF
 
 # ---------- release notes ----------
 KSU_REF="${XM6_KSU_COMMIT:-none}"
-if [ "$KSU_REF" = "none" ] || [ -z "$KSU_REF" ]; then
+if [ "${XM6_VARIANT:-ksu-susfs}" = "ksu-only" ]; then
+  BUILD_DESC="KernelSU ONLY (no SUSFS) — bisect build"
+elif [ "$KSU_REF" = "none" ] || [ -z "$KSU_REF" ]; then
   BUILD_DESC="CONTROL (no KernelSU/SUSFS) — diagnostic build"
 else
   BUILD_DESC="KernelSU ${KSU_REF:0:12} + SUSFS ${XM6_SUSFS_VERSION:-?}"
