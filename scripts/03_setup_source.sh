@@ -88,24 +88,22 @@ cp -v "$SUSFS_DIR/kernel_patches/fs/susfs.c"            "$KERNEL_SRC/fs/"
 python3 - "$KERNEL_SRC/fs/susfs.c" <<'PY'
 import sys
 p = sys.argv[1]
-t = open(p).read()
-old = """#else
-#define SUSFS_LOGI(fmt, ...)
-#define SUSFS_LOGE(fmt, ...)
-#endif"""
-new = """#else
-#define SUSFS_LOGI(fmt, ...)
-#define SUSFS_LOGE(fmt, ...)
-#define SUSFS_LOGI_RL(fmt, ...)
-#define SUSFS_LOGE_RL(fmt, ...)
-#endif"""
-if old in t:
-    open(p, 'w').write(t.replace(old, new, 1))
+lines = open(p).read().splitlines(keepends=True)
+out, inserted = [], False
+for i, ln in enumerate(lines):
+    out.append(ln)
+    if not inserted and ln.startswith('#define SUSFS_LOGE(fmt'):
+        nxt = lines[i + 1].rstrip('\n') if i + 1 < len(lines) else ''
+        window = ''.join(lines[i:i + 3])
+        if nxt.startswith('#endif') and '_RL' not in window:
+            out.append('#define SUSFS_LOGI_RL(fmt, ...)\n')
+            out.append('#define SUSFS_LOGE_RL(fmt, ...)\n')
+            inserted = True
+if inserted:
+    open(p, 'w').writelines(out)
     print("susfs.c: added missing _RL no-log stubs")
-elif new in t:
-    print("susfs.c: _RL stubs already present")
 else:
-    print("susfs.c: pattern not found — upstream may have fixed it; leaving as-is")
+    print("susfs.c: _RL stubs already present or pattern not found - leaving as-is")
 PY
 cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs.h"     "$KERNEL_SRC/include/linux/"
 cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs_def.h" "$KERNEL_SRC/include/linux/"
@@ -114,9 +112,12 @@ cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs_def.h" "$KERNEL_SRC/include
 log "wiring drivers/kernelsu into kernel tree..."
 mkdir -p "$KERNEL_SRC/drivers/kernelsu"
 cp -a "$KSU_DIR/kernel/." "$KERNEL_SRC/drivers/kernelsu/"
-# KSU sources include "uapi/app_profile.h"; upstream keeps uapi/ one level above kernel/
-# (resolvable in their M= build, not in a flat copy) — mirror it into drivers/kernelsu/
-cp -a "$KSU_DIR/uapi" "$KERNEL_SRC/drivers/kernelsu/uapi"
+# KSU sources include "uapi/app_profile.h" and, via -I$(KSU_KERNEL_DIR)/include,
+# "uapi/supercall.h". Upstream keeps the canonical uapi/ at the repo root while
+# kernel/include/uapi/ holds a partial copy — mirror the union into BOTH places so the
+# flat in-tree build resolves every include.
+cp -a "$KSU_DIR/uapi/." "$KERNEL_SRC/drivers/kernelsu/uapi/"
+cp -a "$KSU_DIR/uapi/." "$KERNEL_SRC/drivers/kernelsu/include/uapi/"
 
 # Makefile wiring: append at end (idempotent)
 if ! grep -q "obj-\$(CONFIG_KSU)" "$KERNEL_SRC/drivers/Makefile"; then
