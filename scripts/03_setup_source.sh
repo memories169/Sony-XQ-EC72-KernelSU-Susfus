@@ -112,6 +112,11 @@ cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs_def.h" "$KERNEL_SRC/include
 log "wiring drivers/kernelsu into kernel tree..."
 mkdir -p "$KERNEL_SRC/drivers/kernelsu"
 cp -a "$KSU_DIR/kernel/." "$KERNEL_SRC/drivers/kernelsu/"
+# Upstream ships include/uapi -> ../../uapi (relative to the KSU repo root). In our flat copy
+# the anchor is drivers/kernelsu/, so ../.. lands OUTSIDE the kernel tree — repoint the
+# symlink at ../uapi (one level up = drivers/kernelsu/uapi, filled right below).
+rm -f "$KERNEL_SRC/drivers/kernelsu/include/uapi"
+ln -sfn ../uapi "$KERNEL_SRC/drivers/kernelsu/include/uapi"
 # KSU sources include "uapi/app_profile.h" and, via -I$(KSU_KERNEL_DIR)/include,
 # "uapi/supercall.h". Upstream keeps the canonical uapi/ at the repo root while
 # kernel/include/uapi/ holds a partial copy — mirror the union into BOTH places so the
