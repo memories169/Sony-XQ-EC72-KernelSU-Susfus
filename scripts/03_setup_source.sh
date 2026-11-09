@@ -49,8 +49,8 @@ if [ "$SUS_COMMIT" != "auto" ]; then
   git -C "$SUSFS_DIR" checkout -q --detach "$SUS_COMMIT"
 fi
 SUSRES=$(git -C "$SUSFS_DIR" rev-parse HEAD)
-SUSVER=$(grep -oP '(?<=SUSFS_VERSION ")[^"]+' "$SUSFS_DIR/kernel_patches/fs/susfs.c" 2>/dev/null || \
-         grep -oP '(?<=SUSFS_VERSION ")[^"]+' "$SUSFS_DIR/kernel_patches/include/linux/susfs.h" 2>/dev/null || echo 'unknown')
+SUSVER=$(grep -m1 -oP '(?<=#define SUSFS_VERSION ")[^"]+' \
+           "$SUSFS_DIR/kernel_patches/include/linux/susfs.h" 2>/dev/null || echo 'unknown')
 log "susfs4ksu @ ${SUSRES:0:12} version $SUSVER"
 env_put XM6_SUSFS_COMMIT "$SUSRES"
 env_put XM6_SUSFS_VERSION "$SUSVER"

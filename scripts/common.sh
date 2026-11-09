@@ -49,11 +49,13 @@ fetch_retry() {
 
 env_put() {
   # persist a K=V into ENV_FILE for later steps + exports now
-  local k="$1" v="$2"
+  # value-safe: single-quote with '\'' escaping so any content round-trips
+  local k="$1" v="$2" q
+  q="${v//\'/\'\\\'\'}"
   export "$k=$v"
   mkdir -p "$(dirname "$ENV_FILE")"
   grep -v "^export $k=" "$ENV_FILE" 2>/dev/null > "$ENV_FILE.tmp" || true
-  echo "export $k='$v'" >> "$ENV_FILE.tmp"
+  printf "export %s='%s'\n" "$k" "$q" >> "$ENV_FILE.tmp"
   mv "$ENV_FILE.tmp" "$ENV_FILE"
   # GitHub Actions: propagate to subsequent steps
   if [ -n "${GITHUB_ENV:-}" ] && [ "$k" != "PATH" ]; then
