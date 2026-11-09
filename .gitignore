@@ -1,0 +1,13 @@
+# local build outputs
+out/
+dist/
+downloads/
+kernel-src/
+KernelSU/
+susfs4ksu/
+AnyKernel3/
+prebuilts/
+*.tar.gz
+*.img
+.env
+__pycache__/

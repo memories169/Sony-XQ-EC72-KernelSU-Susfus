@@ -1,0 +1,106 @@
+{
+  "model": "Xperia 1 VI",
+  "codename": "pdx245",
+  "platform": "pineapple",
+  "soc": "SM8650",
+  "board": "niobe",
+  "android_version": "android14",
+  "kernel_version": "6.1",
+  "family": "android14-6.1",
+  "kernel": {
+    "repo": "https://github.com/LineageOS/android_kernel_sony_sm8650",
+    "branch": "lineage-24.0",
+    "commit": "72dc53f720ffe0206100e3e829f148b3e3726680",
+    "auto_track_latest": true,
+    "defconfig": "gki_defconfig",
+    "extra_frags": [
+      "arch/arm64/configs/vendor/pineapple_GKI.config",
+      "arch/arm64/configs/vendor/sony/pineapple_GKI.config",
+      "arch/arm64/configs/vendor/sony/pdx245.config"
+    ]
+  },
+  "kernelsu": {
+    "repo": "https://github.com/tiann/KernelSU.git",
+    "branch": "main",
+    "commit": "019a3c0103a8f8d56675546016c4073d0fd18352",
+    "susfs_ksu_patch": "kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch",
+    "manager_min": 32620,
+    "note": "Pin held for SUSFS 2.4.0 compatibility (see kernel_patches README)."
+  },
+  "susfs": {
+    "repo": "https://gitlab.com/simonpunk/susfs4ksu.git",
+    "branch": "gki-android14-6.1",
+    "commit": "auto",
+    "version": "2.4.0",
+    "kernel_patch": "kernel_patches/50_add_susfs_in_gki-android14-6.1.patch",
+    "files_to_copy": [
+      "fs/susfs.c",
+      "include/linux/susfs.h",
+      "include/linux/susfs_def.h"
+    ]
+  },
+  "anykernel3": {
+    "repo": "https://github.com/WildKernels/AnyKernel3.git",
+    "branch": "gki-2.0",
+    "commit": "e1e9dce98430c5c6f231f7094a8c7f4ecaf50948"
+  },
+  "toolchain": {
+    "clang_repo": "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86",
+    "clang_ref": "refs/tags/android-17.0.0_r1",
+    "clang_version": "r596125",
+    "build_tools_repo": "https://android.googlesource.com/kernel/prebuilts/build-tools",
+    "build_tools_branch": "main-kernel-2025",
+    "ld": "ld.lld",
+    "llvm_ias": true,
+    "note": "LOS 24 nightly pdx245 boot banner reports clang 22.0.2 (r596125). MANDATORY for CFI type-hash match with signed modules."
+  },
+  "bootimg": {
+    "api_url": "https://download.lineageos.org/api/v2/devices/pdx245/builds",
+    "filename": "boot.img",
+    "reference_sha256": "908d3a117ef707e634d9a88ea65eb6028fde92fa0cd1ee7fe023a1535736c69d",
+    "reference_nightly": "lineage-24.0-20261031-nightly-pdx245-signed.zip",
+    "header_version": 4,
+    "page_size": 4096,
+    "avb": {
+      "algorithm": "SHA256_RSA4096",
+      "key": "keys/testkey_rsa4096.pem",
+      "key_sha1_pub": "2597c218aae470a130f61162feaae70afd97f011",
+      "salt_source": "embedded_vbmeta",
+      "rollback_source": "embedded_vbmeta",
+      "props_source": "embedded_vbmeta",
+      "partition_size": 100663296,
+      "release_string": "avbtool 1.4.0"
+    }
+  },
+  "kernel_out": {
+    "uname": "pdx245-Xm6",
+    "localversion": "",
+    "keep_vermagic": true,
+    "modversions": true,
+    "note": "vermagic pinned via .scmversion to match stock exactly: 6.1.177-g72dc53f720ff"
+  },
+  "config": {
+    "base": "extract-ikconfig from stock boot.img kernel (IKCONFIG_ST)",
+    "delta_only": true,
+    "allowed_delta_prefixes": ["CONFIG_KSU", "CONFIG_SUSFS", "CONFIG_LOCALVERSION", "CONFIG_LOCALVERSION_AUTO", "CONFIG_DEBUG_INFO_BTF", "CONFIG_PAHOLE"],
+    "values": {
+      "CONFIG_KSU": "y",
+      "CONFIG_KSU_SUSFS": "y",
+      "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT": "y",
+      "CONFIG_KSU_SUSFS_SUS_PATH": "y",
+      "CONFIG_KSU_SUSFS_SUS_MOUNT": "y",
+      "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT": "y",
+      "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT": "y",
+      "CONFIG_KSU_SUSFS_SUS_KSTAT": "y",
+      "CONFIG_KSU_SUSFS_SUS_OVERLAYFS": "n",
+      "CONFIG_KSU_SUSFS_TRY_UMOUNT": "y",
+      "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT": "y",
+      "CONFIG_KSU_SUSFS_SPOOF_UNAME": "y",
+      "CONFIG_KSU_SUSFS_ENABLE_LOG": "n",
+      "CONFIG_KSU_SUSFS_HIDE_KSU_SYMBOLS": "y",
+      "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG": "y",
+      "CONFIG_KSU_SUSFS_OPEN_REDIRECT": "y",
+      "CONFIG_KSU_SUSFS_SUS_SU": "n"
+    }
+  }
+}

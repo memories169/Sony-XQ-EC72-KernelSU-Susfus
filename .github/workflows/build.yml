@@ -1,0 +1,110 @@
+name: Build Xm6 KernelSU-SUSFS (pdx245)
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_control:
+        description: "Build CONTROL (no KSU/SUSFS) instead — diagnostic"
+        type: boolean
+        default: false
+      kernel_commit:
+        description: "Kernel commit override (empty = config pin)"
+        required: false
+        default: ""
+      draft_release:
+        description: "Create draft release"
+        type: boolean
+        default: true
+  schedule:
+    - cron: "30 17 * * 0"  # weekly Sunday, after LOS nightlies
+
+env:
+  XM6_WORKSPACE: ${{ github.workspace }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
+          sudo apt-get clean
+          df -h /
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential bc bison flex libssl-dev libelf-dev \
+            python3 python3-pip curl zip ccache \
+            android-sdk-platform-tools-common || true
+          # fastboot not needed on CI; python3 & curl already on runner
+
+      - name: AVB testkey
+        run: |
+          mkdir -p keys
+          curl -sfL "https://android.googlesource.com/platform/external/avb/+/refs/heads/main/test/data/testkey_rsa4096.pem?format=TEXT" \
+            | base64 -d > keys/testkey_rsa4096.pem
+          # verify key fingerprint matches stock boot.img embedded pubkey
+          python3 tools/mkbootimg/avbtool.py extract_public_key \
+            --key keys/testkey_rsa4096.pem --output /tmp/pub.avb
+          SHA1=$(sha1sum /tmp/pub.avb | cut -d' ' -f1)
+          echo "testkey pubkey sha1: $SHA1"
+          [ "$SHA1" = "2597c218aae470a130f61162feaae70afd97f011" ] || {
+            echo "::error::testkey does not match stock boot signing key"
+            exit 1
+          }
+
+      - name: 01 — fetch stock boot.img + AVB params
+        run: bash scripts/01_fetch_bootimg.sh
+
+      - name: 02 — toolchain
+        run: bash scripts/02_setup_toolchain.sh
+
+      - name: 03 — kernel + KSU + SUSFS source
+        run: |
+          if [ "${{ inputs.build_control }}" = "true" ]; then
+            # CONTROL build: skip KSU/SUSFS entirely
+            bash scripts/03_setup_source.sh --control
+          else
+            bash scripts/03_setup_source.sh
+          fi
+
+      - name: 04 — build Image
+        run: |
+          if [ "${{ inputs.build_control }}" = "true" ]; then
+            bash scripts/04_build_image.sh --control
+          else
+            bash scripts/04_build_image.sh
+          fi
+
+      - name: 05 — repack + re-sign boot.img
+        run: bash scripts/05_repack_bootimg.sh
+
+      - name: 06 — package AK3 + restore
+        run: bash scripts/06_package_ak3.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xm6-${{ inputs.build_control == true && 'control' || 'ksu-susfs' }}-${{ github.run_id }}
+          path: |
+            dist/*
+            out/boot.signed.img
+            out/Image
+          if-no-files-found: error
+
+      - name: Release
+        if: ${{ inputs.draft_release == true }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly-${{ github.run_id }}
+          name: Xm6 build ${{ github.run_id }} (${{ inputs.build_control == true && 'CONTROL' || 'KSU+SUSFS' }})
+          draft: true
+          files: |
+            dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
