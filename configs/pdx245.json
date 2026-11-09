@@ -105,5 +105,11 @@
       "CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER": "y"
     },
     "note": "Symbol set matches SUSFS 2.4.0 Kconfig exactly (v2.x removed AUTO_ADD_*, TRY_UMOUNT, SUS_OVERLAYFS, HAS_MAGIC_MOUNT, SUS_SU \u2014 those behaviors are now integral or handled by manager)."
+  },
+  "release": {
+    "zip_prefix": "Xm6_KernelSU_SUSFS",
+    "bootimg_prefix": "Xm6_boot",
+    "generate_sha256": true,
+    "flash_instructions": true
   }
 }
