@@ -116,7 +116,9 @@ cp -a "$KSU_DIR/kernel/." "$KERNEL_SRC/drivers/kernelsu/"
 # "uapi/supercall.h". Upstream keeps the canonical uapi/ at the repo root while
 # kernel/include/uapi/ holds a partial copy — mirror the union into BOTH places so the
 # flat in-tree build resolves every include.
+mkdir -p "$KERNEL_SRC/drivers/kernelsu/uapi"
 cp -a "$KSU_DIR/uapi/." "$KERNEL_SRC/drivers/kernelsu/uapi/"
+mkdir -p "$KERNEL_SRC/drivers/kernelsu/include/uapi"
 cp -a "$KSU_DIR/uapi/." "$KERNEL_SRC/drivers/kernelsu/include/uapi/"
 
 # Makefile wiring: append at end (idempotent)
