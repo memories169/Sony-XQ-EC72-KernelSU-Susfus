@@ -45,7 +45,7 @@ device.name5=XQ-EC64
 
 # Only ever touch the boot partition. Never init_boot/recovery/vendor_boot/dtbo.
 block=/dev/block/bootdevice/by-name/boot;
-is_slot_device=0
+is_slot_device=auto
 ramdisk_compression=none
 
 BANNER1="Xm6 KernelSU-SUSFS kernel for Xperia 1 VI (pdx245)"
