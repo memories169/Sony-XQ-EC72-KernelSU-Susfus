@@ -65,19 +65,20 @@ python3 "$AVBTOOL" add_hash_footer \
   --prop "com.android.build.boot.fingerprint:$(python3 -c "import json;print(json.load(open('$OUT_DIR/stock/avb.json'))['props']['com.android.build.boot.fingerprint'])")" \
   --prop com.android.build.boot.security_patch:"$(python3 -c "import json;print(json.load(open('$OUT_DIR/stock/avb.json'))['props']['com.android.build.boot.security_patch'])")"
 
-# sanity: footer present, vbmeta at same offset as stock, payload size matches stock hash-descriptor coverage
-python3 - "$OUT_DIR/boot.signed.img" "$OUT_DIR/stock/avb.json" <<'PY'
-import struct, json, sys
+# sanity: footer present, self-consistent (vbmeta right after payload, footer inside partition).
+# NOTE: offsets need NOT equal stock's — a differently-sized kernel shifts them; the AVBf footer
+# records the actual layout and the bootloader follows the footer.
+python3 - "$OUT_DIR/boot.signed.img" <<'PY'
+import struct, sys
 d = open(sys.argv[1], 'rb').read()
-stock_imgsz = json.load(open(sys.argv[2]))['image_size']
 f = d[-64:]
 assert f[:4] == b'AVBf', 'missing AVBf footer'
-# layout: magic(4) ver_major(4) ver_minor(4) original_size(8) vbmeta_offset(8) vbmeta_size(8)
 orig_size  = struct.unpack_from('>Q', f, 12)[0]
 vb_off     = struct.unpack_from('>Q', f, 20)[0]
 vb_size    = struct.unpack_from('>Q', f, 28)[0]
-assert vb_off == stock_imgsz, f'vbmeta offset {vb_off} != stock image_size {stock_imgsz}'
-assert orig_size == stock_imgsz, f'original_size {orig_size} != stock {stock_imgsz}'
+assert orig_size == vb_off, f'payload end {orig_size} != vbmeta offset {vb_off}'
+assert d[vb_off:vb_off+4] == b'AVB0', 'vbmeta blob not at recorded offset'
+assert vb_off + vb_size < len(d), 'vbmeta out of partition bounds'
 print(f'  footer OK: orig_size={orig_size} vbmeta@{vb_off} (size {vb_size})')
 PY
 
