@@ -83,6 +83,10 @@ workflow_dispatch → tick `build_control`.
 
 ## Ghi chú kỹ thuật
 
+- **Kích thước kernel có thể khác stock** — không sao: hash AVB phủ đúng payload
+  thật, footer ghi vị trí vbmeta thật; bootloader đọc footer nên chấp nhận mọi
+  size hợp lệ (đã chứng minh bằng repro byte-identical khi dùng kernel stock).
+
 - **vermagic pin**: `.scmversion` = `-g<12-ký-tự-hash>` khớp stock
   `6.1.177-g72dc53f720ff` — bắt buộc để kernel module (WiFi/bt v.v.) từ
   `/vendor_dlkm` vẫn load (MODVERSIONS y nhưng vermagic vẫn được check).
