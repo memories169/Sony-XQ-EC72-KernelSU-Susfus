@@ -35,7 +35,7 @@ print(d['props']['com.android.build.boot.os_version'] + '.0.0')")
 OS_PATCH=$(python3 -c "
 import re
 txt=open('$OUT_DIR/stock/unpack.txt').read()
-m=re.search(r'os_patch_level:\s*(\d{4})-(\d{2})', txt)
+m=re.search(r'--os_patch_level[ =](\d{4})-(\d{2})', txt)
 print(m.group(1)+'-'+m.group(2) if m else '2026-11')")
 
 SALT=$(python3 -c "import json;print(json.load(open('$OUT_DIR/stock/avb.json'))['salt'])")
