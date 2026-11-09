@@ -10,14 +10,28 @@ if [ -x "$CLANG_DIR/bin/clang" ]; then
 else
   mkdir -p "$CLANG_DIR"
   log "fetching clang $CLANG_VER (android-17.0.0_r1)..."
-  # large tarball (~1.1GB): fetch with retries, then VERIFY gzip integrity before extract
+  # large tarball (~1.1GB): fetch with retries, then VERIFY gzip integrity before extract.
+  # googlesource occasionally 503s mid-transfer AND drops byte-range support — on resume
+  # failure (curl 33) delete the partial and start over; backoff grows each round.
   local_ok=""
-  for i in 1 2 3 4 5; do
-    curl -fL --connect-timeout 30 --retry 3 --retry-delay 5 -C - \
+  for i in 1 2 3 4 5 6 7 8; do
+    if curl -fL --connect-timeout 30 --retry 3 --retry-delay 5 -C - \
       "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-17.0.0_r1/clang-r596125.tar.gz" \
-      -o "$OUT_DIR/clang.tar.gz" && { log "download OK (attempt $i)"; local_ok=1; break; }
-    warn "clang download attempt $i failed; retrying"
-    sleep 10
+      -o "$OUT_DIR/clang.tar.gz"; then
+      if gzip -t "$OUT_DIR/clang.tar.gz" 2>/dev/null; then
+        log "download OK + gzip verified (attempt $i)"; local_ok=1; break
+      fi
+      warn "attempt $i: transfer ended but gzip invalid — restarting from scratch"
+      rm -f "$OUT_DIR/clang.tar.gz"
+    else
+      rc=$?
+      warn "clang download attempt $i failed (curl rc=$rc); retrying"
+      if [ "$rc" -eq 33 ] || [ "$rc" -eq 36 ]; then
+        warn "range/resume unsupported right now — discarding partial file"
+        rm -f "$OUT_DIR/clang.tar.gz"
+      fi
+    fi
+    sleep $((10 * i))
   done
   [ -n "$local_ok" ] || die "clang download failed after retries"
   for i in 1 2 3; do
