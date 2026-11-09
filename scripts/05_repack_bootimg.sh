@@ -70,11 +70,14 @@ python3 - "$OUT_DIR/boot.signed.img" "$OUT_DIR/stock/avb.json" <<'PY'
 import struct, json, sys
 d = open(sys.argv[1], 'rb').read()
 stock_imgsz = json.load(open(sys.argv[2]))['image_size']
-assert d[-64:-60] == b'AVBf', 'missing AVBf footer'
-orig_size, vb_off, vb_size = struct.unpack_from('>3Q', d, len(d)-64+8)
+f = d[-64:]
+assert f[:4] == b'AVBf', 'missing AVBf footer'
+# layout: magic(4) ver_major(4) ver_minor(4) original_size(8) vbmeta_offset(8) vbmeta_size(8)
+orig_size  = struct.unpack_from('>Q', f, 12)[0]
+vb_off     = struct.unpack_from('>Q', f, 20)[0]
+vb_size    = struct.unpack_from('>Q', f, 28)[0]
 assert vb_off == stock_imgsz, f'vbmeta offset {vb_off} != stock image_size {stock_imgsz}'
 assert orig_size == stock_imgsz, f'original_size {orig_size} != stock {stock_imgsz}'
-# payload bytes before vbmeta must match kernel coverage exactly
 print(f'  footer OK: orig_size={orig_size} vbmeta@{vb_off} (size {vb_size})')
 PY
 
