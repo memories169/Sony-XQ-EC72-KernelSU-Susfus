@@ -104,7 +104,9 @@ if [ "$CONTROL" = "1" ]; then
   fi
   log "control gates OK (no KSU)"
 else
-  . "$REPO_ROOT/scripts/check_config.sh" "$KERNEL_SRC/out/.config"
+  # subshell: check_config.sh ends with `exit $fail`, which would terminate THIS script
+  # (sourced scripts' exit leaves the caller) — run it in ( ) and map to die on failure
+  ( . "$REPO_ROOT/scripts/check_config.sh" "$KERNEL_SRC/out/.config" ) || die "config gates failed — see FAIL lines above"
 fi
 
 # scmversion pin: exact -g<hash> matching the stock kernel release
