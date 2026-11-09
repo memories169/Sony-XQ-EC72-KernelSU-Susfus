@@ -48,20 +48,41 @@ Phương pháp được chứng minh bằng thí nghiệm repro: build lại boo
 
 ## Flash
 
-### Cách A — fastboot (khuyên dùng; không cần recovery)
+### Cách A — fastbootd (khuyên dùng; bắt buộc cho image lớn)
 
-1. **Tắt máy** hoàn toàn (giữ Power ~15s nếu máy treo logo).
-2. **Giữ Volume Up** rồi cắm cáp USB vào máy tính → đèn LED **xanh dương** =
-   bootloader fastboot (blue star). Đây là chế độ độc lập với boot.img nên
-   **luôn vào được kể cả khi kernel hỏng**.
+Bootloader fastboot của Sony **từ chối image lớn** (`Requested download size
+is more than max allowed`) — phải qua **fastbootd** (userspace trên LOS
+recovery):
+
+1. Vào recovery: `adb reboot recovery`, hoặc **giữ Vol Down + cắm USB** nếu
+   không boot được hệ điều hành.
+2. Recovery → **Advanced → Reboot to fastboot** (máy hiện `FASTBOOTD`).
 3. Trên máy tính:
    ```bash
    fastboot devices                # phải thấy thiết bị
+   fastboot getvar current-slot    # xem slot hiện hành
    fastboot flash boot standalone_boot.img
    fastboot reboot
    ```
-   `standalone_boot.img` nằm trong zip AnyKernel3 (hoặc dùng `boot-stock.img`
-   từ zip restore để quay về stock).
+   `standalone_boot.img` nằm trong zip AnyKernel3 (hoặc `boot-stock.img`
+   từ zip restore để quay về stock). Nếu báo `no partition boot`, flash
+   cả `boot_a` và `boot_b`.
+
+> ℹ️ `init_boot` / `init_boot_a` / `init_boot_b`: pdx245 **không có** phân
+> vùng này (`partition size 0` — flash luôn thất bại, kernel nằm trong
+> `boot`). Đừng cố flash nó.
+
+### Cách dự phòng — bootloader fastboot (đèn xanh dương)
+
+**Giữ Volume Up + cắm USB** → đèn LED xanh dương (blue star). Chế độ độc
+lập với boot.img nên luôn vào được kể cả khi kernel hỏng — nhưng bị giới hạn
+`max-download-size`:
+```bash
+fastboot getvar max-download-size
+fastboot flash boot_a boot-stock.img   # thử từng slot
+fastboot flash boot_b boot-stock.img
+```
+Nếu cả hai slot đều báo "max allowed" → quay lại đường fastbootd.
 
 ### Cách B — recovery (nếu LOS recovery vẫn boot được)
 
@@ -70,7 +91,7 @@ Install zip AnyKernel3 (`*.zip` trong release).
 ## Bootloop? Khôi phục trong 2 phút
 
 1. Tắt máy (giữ Power ~15s).
-2. **Volume Up + cắm USB** → fastboot (đèn xanh dương).
+2. **Giữ Vol Down + cắm USB** → vào recovery → **Reboot to fastboot**.
 3. `fastboot flash boot boot-stock.img` (từ zip restore) → `fastboot reboot`.
 
 **Không dùng newflasher.** Newflasher flash toàn bộ firmware và **xóa dữ liệu** —

@@ -76,30 +76,47 @@ rm -f "$RESTORE"
 mkdir -p "$OUT_DIR/restore"
 cp "$DOWNLOADS/boot.img" "$OUT_DIR/restore/boot-stock.img"
 cat > "$OUT_DIR/restore/RESTORE-README.txt" <<'EOF'
-Xm6 KernelSU-SUSFS — KHÔI PHỤC BOOT STOCK (unbrick)
+Xm6 KernelSU-SUSFS - KHOI PHUC BOOT STOCK (unbrick)
 ====================================================
-Khôi phục này ghi đúng 1 phân vùng: boot. Không mất dữ liệu.
+Khoi phuc nay ghi dung 1 phan vung: boot. Khong mat du lieu.
 
-Cách 1 — fastboot (khuyên dùng; hoạt động cả khi không vào được hệ thống):
-  1. Tắt máy hoàn toàn (giữ Power 10-15s nếu cần).
-  2. Giữ nút Volume Up (Vol+) rồi cắm cáp USB vào máy tính
-     → đèn LED xanh dương / ngôi sao xanh = bootloader fastboot.
-  3. Trên máy tính:
+CACH CHINH — fastbootd (bat buoc voi Xperia 1 VI):
+  Bootloader fastboot cua Sony KHONG cho flash image lon (loi
+  "Requested download size is more than max allowed"). Phai vao FASTBOOTD:
+
+  1. Vao recovery cua LineageOS:
+     - Neu con vao duoc he thong: Developer options -> Reboot to recovery,
+       hoac: adb reboot recovery
+     - Neu khong vao duoc he thong: nhan giu Vol Down trong khi cam USB
+       (hoac Power + Vol Down) den thay logo recovery.
+  2. Trong recovery chon: Advanced -> Reboot to fastboot
+     (hoac: Fastboot / Enter fastboot). May hien chu "FASTBOOTD".
+  3. Tren may tinh (co the thay QV770GL2MM nhu thuong):
        fastboot devices
+       fastboot getvar current-slot        # xem slot dang dung
        fastboot flash boot boot-stock.img
        fastboot reboot
-  4. Xong: máy đã về boot stock của LineageOS. Dữ liệu nguyên vẹn.
+     Neu bao "no partition boot": flash ca hai slot:
+       fastboot flash boot_a boot-stock.img
+       fastboot flash boot_b boot-stock.img
 
-Cách 2 — recovery (nếu vẫn boot được recovery):
-  TWRP/LOS recovery → Install → chọn zip AnyKernel3 stock (nếu có) hoặc
-  dùng dd: dd if=boot-stock.img of=/dev/block/bootdevice/by-name/boot
+CACH DU PHONG — bootloader fastboot (den LED xanh duong: giu Vol Up + cam USB):
+  Chi DUNG khi fastbootd khong vao duoc. Thu lan luot (thuong phai flash
+  TUNG SLOT va image phai nho hon max-download-size):
+       fastboot getvar max-download-size    # xem gioi han
+       fastboot getvar current-slot
+       fastboot flash boot_a boot-stock.img
+       fastboot flash boot_b boot-stock.img
+  Neu loi "Requested download size is more than max allowed" tren ca hai
+  slot thi bootloader khong nhan duoc image — bat buoc phai dua may ve
+  recovery/fastbootd (CACH CHINH o tren), hoac dung newflasher (MAT DU LIEU).
 
-Lưu ý:
-- KHÔNG BAO GIỜ flash init_boot.img hoặc recovery.img khi đổi kernel:
-  hai phân vùng này KHÔNG chứa kernel; hỏng boot = hỏng luôn recovery.
-- Phân vùng khởi động đôi (A/B): nếu fastboot báo "no boot partition",
-  thử: fastboot flash boot_a boot-stock.img ; fastboot flash boot_b boot-stock.img
-EOF
+LUU Y QUAN TRONG:
+- KHONG BAO GIO flash init_boot / init_boot_a / init_boot_b: pdx245 khong
+  co phan vung nay (size 0) — that bai la binh thuong, kernel khong nam o day.
+- KHONG flash recovery.img / vendor_boot / dtbo khi doi kernel.
+- Sau khi ve boot stock nguon: mo lai fastbootd de flash kernel mong muon.
+
 (cd "$OUT_DIR/restore" && zip -r9 -q "$RESTORE" boot-stock.img RESTORE-README.txt)
 ( cd "$DIST_DIR" && sha256sum "$(basename "$RESTORE")" > "$(basename "$RESTORE").sha256" )
 
