@@ -21,6 +21,9 @@ on:
 env:
   XM6_WORKSPACE: ${{ github.workspace }}
 
+permissions:
+  contents: write  # required by softprops/action-gh-release to create releases
+
 jobs:
   build:
     runs-on: ubuntu-24.04
