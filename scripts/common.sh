@@ -55,7 +55,29 @@ env_put() {
   grep -v "^export $k=" "$ENV_FILE" 2>/dev/null > "$ENV_FILE.tmp" || true
   echo "export $k='$v'" >> "$ENV_FILE.tmp"
   mv "$ENV_FILE.tmp" "$ENV_FILE"
+  # GitHub Actions: propagate to subsequent steps
+  if [ -n "${GITHUB_ENV:-}" ] && [ "$k" != "PATH" ]; then
+    echo "$k=$v" >> "$GITHUB_ENV"
+  fi
+  if [ -n "${GITHUB_PATH:-}" ] && [ "$k" = "PATH" ]; then
+    # GITHUB_PATH wants one directory per line; skip standard dirs
+    local d
+    IFS=':' read -ra DIRS <<< "$v"
+    for d in "${DIRS[@]}"; do
+      case "$d" in
+        /usr/local/sbin|/usr/local/bin|/usr/sbin|/usr/bin|/sbin|/bin|/snap/bin) ;;
+        '') ;;
+        *) echo "$d" >> "$GITHUB_PATH" ;;
+      esac
+    done
+  fi
 }
+
+# auto-load persisted env from previous steps (each CI step is a fresh shell)
+if [ -f "$ENV_FILE" ]; then
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+fi
 
 require_tools() {
   local t

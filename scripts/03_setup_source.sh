@@ -43,20 +43,20 @@ fi
 
 rm -rf "$SUSFS_DIR"
 log "cloning susfs4ksu ($SUS_BRANCH)..."
-git clone --depth 1 --branch "$SUS_BRANCH" "$SUS_REPO" "$SUS_DIR"
+git clone --depth 1 --branch "$SUS_BRANCH" "$SUS_REPO" "$SUSFS_DIR"
 if [ "$SUS_COMMIT" != "auto" ]; then
-  git -C "$SUS_DIR" fetch --depth 1 origin "$SUS_COMMIT" 2>/dev/null || true
-  git -C "$SUS_DIR" checkout -q --detach "$SUS_COMMIT"
+  git -C "$SUSFS_DIR" fetch --depth 1 origin "$SUS_COMMIT" 2>/dev/null || true
+  git -C "$SUSFS_DIR" checkout -q --detach "$SUS_COMMIT"
 fi
-SUSRES=$(git -C "$SUS_DIR" rev-parse HEAD)
-SUSVER=$(grep -oP '(?<=SUSFS_VERSION ")[^"]+' "$SUS_DIR/kernel_patches/fs/susfs.c" 2>/dev/null || \
-         grep -oP '(?<=SUSFS_VERSION ")[^"]+' "$SUS_DIR/kernel_patches/include/linux/susfs.h" 2>/dev/null || echo 'unknown')
+SUSRES=$(git -C "$SUSFS_DIR" rev-parse HEAD)
+SUSVER=$(grep -oP '(?<=SUSFS_VERSION ")[^"]+' "$SUSFS_DIR/kernel_patches/fs/susfs.c" 2>/dev/null || \
+         grep -oP '(?<=SUSFS_VERSION ")[^"]+' "$SUSFS_DIR/kernel_patches/include/linux/susfs.h" 2>/dev/null || echo 'unknown')
 log "susfs4ksu @ ${SUSRES:0:12} version $SUSVER"
 env_put XM6_SUSFS_COMMIT "$SUSRES"
 env_put XM6_SUSFS_VERSION "$SUSVER"
 
-KSU_PATCH="$SUS_DIR/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
-SUS_PATCH="$SUS_DIR/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch"
+KSU_PATCH="$SUSFS_DIR/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
+SUS_PATCH="$SUSFS_DIR/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch"
 [ -f "$KSU_PATCH" ] || die "missing KSU susfs patch: $KSU_PATCH"
 [ -f "$SUS_PATCH" ] || die "missing kernel susfs patch: $SUS_PATCH"
 
@@ -81,22 +81,34 @@ git -C "$KERNEL_SRC" apply --check "$SUS_PATCH" || die "kernel susfs patch does 
 git -C "$KERNEL_SRC" apply "$SUS_PATCH"
 
 # copy susfs source files (patch adds build wiring; files live in kernel_patches/)
-cp -v "$SUS_DIR/kernel_patches/fs/susfs.c"            "$KERNEL_SRC/fs/"
-cp -v "$SUS_DIR/kernel_patches/include/linux/susfs.h"     "$KERNEL_SRC/include/linux/"
-cp -v "$SUS_DIR/kernel_patches/include/linux/susfs_def.h" "$KERNEL_SRC/include/linux/"
+cp -v "$SUSFS_DIR/kernel_patches/fs/susfs.c"            "$KERNEL_SRC/fs/"
+cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs.h"     "$KERNEL_SRC/include/linux/"
+cp -v "$SUSFS_DIR/kernel_patches/include/linux/susfs_def.h" "$KERNEL_SRC/include/linux/"
 
 # ---------- wire KernelSU into the kernel tree ----------
 log "wiring drivers/kernelsu into kernel tree..."
 mkdir -p "$KERNEL_SRC/drivers/kernelsu"
 cp -a "$KSU_DIR/kernel/." "$KERNEL_SRC/drivers/kernelsu/"
 
-# Makefile + Kconfig wiring (idempotent)
-grep -q "kernelsu" "$KERNEL_SRC/drivers/Makefile" || \
-  sed -i 's/obj-$(CONFIG_GKI_HACKS_TO_FIX) += gki;/obj-$(CONFIG_GKI_HACKS_TO_FIX) += gki;\nobj-$(CONFIG_KSU) += kernelsu;/' "$KERNEL_SRC/drivers/Makefile"
-grep -q "kernelsu" "$KERNEL_SRC/drivers/Kconfig" || \
-  sed -i 's/source "drivers\/kconfig.secure".*//; s/^endmenu$/source "drivers\/kernelsu\/Kconfig"\nendmenu/' "$KERNEL_SRC/drivers/Kconfig" || true
+# Makefile wiring: append at end (idempotent)
+if ! grep -q "obj-\$(CONFIG_KSU)" "$KERNEL_SRC/drivers/Makefile"; then
+  printf '\nobj-$(CONFIG_KSU) += kernelsu/\n' >> "$KERNEL_SRC/drivers/Makefile"
+fi
+
+# Kconfig wiring: insert source before the final endmenu (idempotent)
 if ! grep -q 'source "drivers/kernelsu/Kconfig"' "$KERNEL_SRC/drivers/Kconfig"; then
-  printf '\nsource "drivers/kernelsu/Kconfig"\n' >> "$KERNEL_SRC/drivers/Kconfig"
+  python3 - "$KERNEL_SRC/drivers/Kconfig" <<'PY'
+import sys
+p = sys.argv[1]
+txt = open(p).read()
+idx = txt.rfind('endmenu')
+if idx == -1:
+    txt += '\nsource "drivers/kernelsu/Kconfig"\n'
+else:
+    txt = txt[:idx] + 'source "drivers/kernelsu/Kconfig"\n\n' + txt[idx:]
+open(p, 'w').write(txt)
+print('Kconfig: kernelsu source inserted before endmenu')
+PY
 fi
 
 log "step 03 done: source ready at $KERNEL_SRC"

@@ -71,7 +71,7 @@ import struct, json, sys
 d = open(sys.argv[1], 'rb').read()
 stock_imgsz = json.load(open(sys.argv[2]))['image_size']
 assert d[-64:-60] == b'AVBf', 'missing AVBf footer'
-orig_size, vb_off, vb_size = struct.unpack_from('>Q', d, len(d)-64+8)[0], *struct.unpack_from('>2Q', d, len(d)-64+20)
+orig_size, vb_off, vb_size = struct.unpack_from('>3Q', d, len(d)-64+8)
 assert vb_off == stock_imgsz, f'vbmeta offset {vb_off} != stock image_size {stock_imgsz}'
 assert orig_size == stock_imgsz, f'original_size {orig_size} != stock {stock_imgsz}'
 # payload bytes before vbmeta must match kernel coverage exactly
