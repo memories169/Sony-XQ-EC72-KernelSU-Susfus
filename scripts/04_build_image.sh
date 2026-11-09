@@ -64,10 +64,23 @@ fi
 log "merging: gki_defconfig + stock base + KSU/SUSFS fragment"
 make -C "$KERNEL_SRC" O=out ARCH=arm64 gki_defconfig
 cp "$OUT_DIR/xm6.base.config" "$KERNEL_SRC/out/.config"
-# run olddefconfig to settle symbols from defconfig first
-make -C "$KERNEL_SRC" O=out ARCH=arm64 olddefconfig
-# apply fragment on top
+# apply fragment on top (before any olddefconfig so every value lands in one pass)
 cat "$FRAG" >> "$KERNEL_SRC/out/.config"
+# single olddefconfig settles everything; then verify mandatory symbols survived
+make -C "$KERNEL_SRC" O=out ARCH=arm64 olddefconfig
+
+MANDATORY=(CONFIG_ARCH_PINEAPPLE CONFIG_CFI_CLANG CONFIG_SHADOW_CALL_STACK
+           CONFIG_MODULE_SIG CONFIG_MODULE_SIG_PROTECT CONFIG_MODVERSIONS
+           CONFIG_MODULES CONFIG_KPROBES CONFIG_LTO_NONE)
+missing=""
+for sym in "${MANDATORY[@]}"; do
+  if ! grep -q "^${sym}=y" "$KERNEL_SRC/out/.config"; then
+    missing="$missing $sym"
+    echo "${sym}=y" >> "$KERNEL_SRC/out/.config"
+  fi
+done
+[ -z "$missing" ] || log "re-injected missing mandatory symbols:$missing"
+# settle again after re-injection
 make -C "$KERNEL_SRC" O=out ARCH=arm64 olddefconfig
 
 # BTF off: pahole not available on CI; not needed for boot (stock has BTF off too? verify)
